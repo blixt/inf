@@ -1,0 +1,35 @@
+#!/bin/sh
+
+if [ -d src/closure-library ]; then
+    if [ `find src/closure-library/.svn -maxdepth 0 -mtime +1 | wc -l` -gt 1 ]; then
+        echo Making sure Closure library is up-to-date...
+        cd src/closure-library
+        svn up
+        cd ../..
+    fi
+else
+    echo Fetching Closure library...
+    svn checkout http://closure-library.googlecode.com/svn/trunk/ src/closure-library
+fi
+
+if [ ! -d out ]; then
+    mkdir out
+fi
+
+cp -f src/demo.html out
+
+src/closure-library/closure/bin/build/closurebuilder.py \
+  --root=src/ \
+  --namespace="demo.main" \
+  --output_mode=compiled \
+  --compiler_jar=build/compiler.jar \
+  --compiler_flags="--externs=build/externs.js" \
+  --compiler_flags="--compilation_level=ADVANCED_OPTIMIZATIONS" \
+  --compiler_flags="--warning_level=VERBOSE" \
+  --compiler_flags="--summary_detail_level=3" \
+  --compiler_flags="--define='inf.DEBUG=false'" \
+  > out/demo.js
+
+src/closure-library/closure/bin/build/depswriter.py  \
+  --root_with_prefix="src ../../../" \
+  > src/demo-deps.js
