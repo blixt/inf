@@ -96,21 +96,25 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
 
     var nx = this.x,
         ny = this.y,
-        minX = Math.floor(nx),
-        maxX = Math.ceil(nx),
-        r;
+        heightAdjust = this.height - 1, // The height difference to consider.
+        widthAdjust = this.width - 1, // The width difference to consider.
+        minX = Math.floor(nx), // First X block that entity is in.
+        maxX = Math.ceil(nx + widthAdjust), // Last X block that entity is in.
+        r, // Reference to a region.
+        endX, endY;
 
     // Move the entity along the Y axis.
     // Make sure the new Y coordinate is not out of bounds.
     if (dy) {
-        if (ny + dy <= this.height) {
-            ny = this.height - 1;
+        if (ny + dy < heightAdjust) {
+            ny = heightAdjust;
         } else if (ny + dy > inf.logic.Region.BLOCKS_Y - 1) {
             ny = inf.logic.Region.BLOCKS_Y - 1;
         } else {
             // Collision detection along the Y axis.
+            var my;
             r = this.region;
-            var my, endX = maxX;
+            endX = maxX;
             for (var x = minX; x <= endX; x++) {
                 if (x >= inf.logic.Region.BLOCKS_X) {
                     // Tile to check is in next region.
@@ -136,13 +140,14 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                     }
                 } else {
                     // Entity is moving up.
-                    my = Math.floor(ny)
+                    my = Math.floor(ny - heightAdjust - 1);
+                    endY = ny + dy - heightAdjust - 1;
                     // Iterate towards the destination, checking for obstacles.
-                    for (var y = my; y > ny + dy; y--) {
+                    for (var y = my; y > endY; y--) {
                         if (r.getBlock(x, y) != inf.logic.Region.BlockType.AIR)
                         {
                             // Hit an obstacle; reduce delta.
-                            dy = Math.max(ny - y, dy);
+                            dy = Math.max(y + 1 + heightAdjust - ny, dy);
                             break;
                         }
                     }
@@ -172,9 +177,74 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
             throw Error('Cannot move entity across more than one region.');
         }
 
-        // TODO: Collision detection.
-        var minY = Math.floor(ny - this.height + 1),
+        // Collision detection along the X axis.
+        var mx, tx,
+            minY = Math.floor(ny - heightAdjust),
             maxY = Math.ceil(ny);
+        for (var y = minY; y <= maxY; y++) {
+            r = this.region;
+            // Temporary X coordinate to use in case of wrapping.
+            tx = nx;
+
+            if (dx > 0) {
+                // Entity is moving to the right.
+                mx = Math.ceil(nx + widthAdjust + 1);
+                // Iterate towards the destination, checking for obstacles.
+                endX = nx + widthAdjust + 1 + dx;
+                for (var x = mx; x < endX; x++) {
+                    if (x >= inf.logic.Region.BLOCKS_X) {
+                        // Tile to check is in next region.
+                        r = r.getNext();
+                        // Not much we can do about region not being loaded yet.
+                        if (!r) { break; }
+                        // Reassign X coordinate to wrap around.
+                        x = 0;
+                        tx -= inf.logic.Region.BLOCKS_X;
+                        endX -= inf.logic.Region.BLOCKS_X;
+                    }
+
+                    if (r.getBlock(x, y) != inf.logic.Region.BlockType.AIR)
+                    {
+                        // Hit an obstacle; reduce delta.
+                        dx = Math.min(x - 1 - widthAdjust - tx, dx);
+                        break;
+                    }
+                }
+            } else {
+                // Entity is moving to the left.
+                mx = Math.floor(nx - 1)
+                // Iterate towards the destination, checking for obstacles.
+                endX = nx + dx - 1;
+                for (var x = mx; x > endX; x--) {
+                    if (x < 0) {
+                        // Tile to check is in previous region.
+                        r = r.getPrev();
+                        // Not much we can do about region not being loaded yet.
+                        if (!r) { break; }
+                        // Reassign X coordinate to wrap around.
+                        x = inf.logic.Region.BLOCKS_X - 1;
+                        tx += inf.logic.Region.BLOCKS_X;
+                        endX += inf.logic.Region.BLOCKS_X;
+                    }
+
+                    if (r.getBlock(x, y) != inf.logic.Region.BlockType.AIR)
+                    {
+                        // Hit an obstacle; reduce delta.
+                        dx = Math.max(x + 1 - tx, dx);
+                        break;
+                    }
+                }
+            }
+
+            if (x === mx) {
+                // There was a block immediately next to the entity. This means
+                // that the next Y loop isn't needed. This case is common
+                // enough to quit early from.
+                // XXX: What about a block appearing in the position
+                //      that would have been checked by next loop?
+                break;
+            }
+        }
 
         if (nx + dx < 0) {
             r = this.region.getPrev();
