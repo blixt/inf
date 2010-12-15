@@ -519,8 +519,8 @@ inf.gfx.Viewport.prototype.center = function(region, x, y) {
             sprite = document.createElement('div');
             sprite.style.position = 'absolute';
             sprite.style.background = '#000';
-            sprite.style.width = (e.width * inf.gfx.View.BLOCK_SIZE) + 'px';
-            sprite.style.height = (e.height * inf.gfx.View.BLOCK_SIZE) + 'px';
+            sprite.style.width = Math.ceil(e.width * inf.gfx.View.BLOCK_SIZE) + 'px';
+            sprite.style.height = Math.ceil(e.height * inf.gfx.View.BLOCK_SIZE) + 'px';
             sprite.style.zIndex = '1';
             this.div_.appendChild(sprite);
             this.sprites_[id] = sprite;
