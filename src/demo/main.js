@@ -12,6 +12,7 @@ goog.provide('demo.main');
 
 goog.require('inf.gfx');
 goog.require('inf.logic');
+goog.require('inf.ui');
 
 function genRegionData() {
     var data = [];
@@ -56,12 +57,20 @@ function main() {
     world.addRegion(r5, 4, 6);
     world.addRegion(r6, 5, 1);
 
-    var player = new inf.logic.Entity(1, r3, 12, 118, 1, 2);
-
+    var player = new inf.logic.Entity(1, r3, 12, 118, 0.9, 1.9);
     var viewport = new inf.gfx.Viewport(640, 480, 'viewport');
+    var ui = new inf.ui.KeyboardMouseInterface();
+
+    var vy = 0.2;
+
+    ui.listen('jump', function() { vy = -0.4; });
 
     setInterval(function() {
-        player.move(0.1, 0);
+        var vx = 0;
+        if (ui.state.left) vx -= 0.1;
+        if (ui.state.right) vx += 0.1;
+        if (vy < 0.4) { vy += 0.05; } else { vy = 0.4; }
+        player.move(vx, vy);
         viewport.center(player.region, player.x, player.y);
     }, 20);
 }
