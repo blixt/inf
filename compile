@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ -d src/closure-library ]; then
-    if [ `find src/closure-library/.svn -maxdepth 0 -mtime +1 | wc -l` -gt 1 ]; then
+    if [ `find src/closure-library/.svn -maxdepth 0 -mtime +1d | wc -l` -eq 1 ]; then
         echo Making sure Closure library is up-to-date...
         cd src/closure-library
         svn up
