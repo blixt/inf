@@ -25,9 +25,9 @@ inf.ui.Interface = function() {
      * @type {!Object.<string, Array.<function(boolean)>>}
      */
     this.actions_ = {
-        jump: [],
-        left: [],
-        right: []
+        'jump': [],
+        'left': [],
+        'right': []
     };
 
     /**
