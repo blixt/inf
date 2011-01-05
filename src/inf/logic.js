@@ -60,6 +60,12 @@ inf.logic.Entity = function(id, region, x, y, width, height) {
      */
     this.height = height;
 
+    /**
+     * Whether the entity is colliding with something on a specific edge.
+     * @type Object.<string, boolean>
+     */
+    this.colliding = {up: false, down: false, left: false, right: false};
+
     if (inf.DEBUG) {
         console.log('Loaded entity #' + id + '.');
     }
@@ -106,10 +112,13 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
     // Move the entity along the Y axis.
     // Make sure the new Y coordinate is not out of bounds.
     if (dy) {
+        var downCollision = false, upCollision = false;
         if (ny + dy < heightAdjust) {
             ny = heightAdjust;
+            upCollision = true;
         } else if (ny + dy > inf.logic.Region.BLOCKS_Y - 1) {
             ny = inf.logic.Region.BLOCKS_Y - 1;
+            downCollision = true;
         } else {
             // Collision detection along the Y axis.
             var my;
@@ -135,6 +144,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                         {
                             // Hit an obstacle; reduce delta.
                             dy = Math.min(y - ny - 1, dy);
+                            downCollision = true;
                             break;
                         }
                     }
@@ -148,6 +158,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                         {
                             // Hit an obstacle; reduce delta.
                             dy = Math.max(y + 1 + heightAdjust - ny, dy);
+                            upCollision = true;
                             break;
                         }
                     }
@@ -166,6 +177,8 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
             ny += dy;
         }
 
+        this.colliding.down = downCollision;
+        this.colliding.up = upCollision;
         this.y = ny;
     }
 
@@ -176,6 +189,8 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
         if (Math.abs(dx) > inf.logic.Region.BLOCKS_X) {
             throw Error('Cannot move entity across more than one region.');
         }
+
+        var leftCollision = false, rightCollision = false;
 
         // Collision detection along the X axis.
         var mx, tx,
@@ -207,6 +222,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                     {
                         // Hit an obstacle; reduce delta.
                         dx = Math.min(x - 1 - widthAdjust - tx, dx);
+                        rightCollision = true;
                         break;
                     }
                 }
@@ -231,6 +247,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                     {
                         // Hit an obstacle; reduce delta.
                         dx = Math.max(x + 1 - tx, dx);
+                        leftCollision = true;
                         break;
                     }
                 }
@@ -253,6 +270,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                 this.changeRegion(r);
             } else {
                 this.x = 0;
+                leftCollision = true;
             }
         } else if (nx + dx >= inf.logic.Region.BLOCKS_X) {
             r = this.region.getNext();
@@ -261,10 +279,14 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                 this.changeRegion(r);
             } else {
                 this.x = inf.logic.Region.BLOCKS_X - 1;
+                rightCollision = true;
             }
         } else {
             this.x += dx;
         }
+
+        this.colliding.left = leftCollision;
+        this.colliding.right = rightCollision;
     }
 };
 
