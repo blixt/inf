@@ -58,12 +58,15 @@ function main() {
     world.addRegion(r6, 5, 1);
 
     var player = new inf.logic.Entity(1, r3, 12, 118, 0.9, 1.9);
-    var viewport = new inf.gfx.Viewport(640, 480, 'viewport');
+    var viewport = new inf.gfx.Viewport(480, 480, 'viewport');
     var ui = new inf.ui.KeyboardMouseInterface();
 
     var vy = 0.2;
 
-    ui.listen('jump', function() { vy = -0.4; });
+    ui.listen('jump', function() {
+        if (!player.colliding.down) { return; }
+        vy = -0.5;
+    });
 
     setInterval(function() {
         var vx = 0;
