@@ -61,7 +61,7 @@ inf.ui.Interface.prototype.listen = function(action, handler) {
  */
 inf.ui.Interface.prototype.toggle = function(action, opt_state) {
     var a = this.actions_[action],
-        state = (typeof opt_state === 'undefined' ? !this.states[action] :
+        state = (typeof opt_state === 'undefined' ? !this.state[action] :
                  opt_state);
     this.state[action] = state;
 
