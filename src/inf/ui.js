@@ -1,4 +1,4 @@
-// Copyright © Andreas Blixt 2010. MIT license.
+// Copyright © Andreas Blixt 2011. MIT license.
 
 /**
  * @fileoverview User interface implementations for handling user input for

@@ -1,4 +1,4 @@
-// Copyright © Andreas Blixt 2010. MIT license.
+// Copyright © Andreas Blixt 2011. MIT license.
 
 /**
  * @fileoverview Code for starting up the game on a page.
