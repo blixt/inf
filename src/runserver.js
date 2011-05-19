@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Copyright © Andreas Blixt 2011. MIT license.
 
 var fs = require('fs'),
     ws = require('./vendor/websocket-server');
