@@ -36,5 +36,5 @@ src/closure-library/closure/bin/build/closurebuilder.py \
   > out/demo.js
 
 src/closure-library/closure/bin/build/depswriter.py  \
-  --root_with_prefix="src $SRC_ROOT/src/" \
+  --root_with_prefix="src ../../../" \
   > src/deps.js
