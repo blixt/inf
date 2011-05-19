@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# Make sure we're working in the directory that the script is in.
+cd `dirname $0`
+# Store the full path to this directory in a variable.
+SRC_ROOT=`pwd`
+
 if [ -d src/closure-library ]; then
     if [ `find src/closure-library/.svn -maxdepth 0 -mtime +1d | wc -l` -eq 1 ]; then
         echo Making sure Closure library is up-to-date...
@@ -31,5 +36,5 @@ src/closure-library/closure/bin/build/closurebuilder.py \
   > out/demo.js
 
 src/closure-library/closure/bin/build/depswriter.py  \
-  --root_with_prefix="src ../../../" \
-  > src/demo-deps.js
+  --root_with_prefix="src $SRC_ROOT/src/" \
+  > src/deps.js
