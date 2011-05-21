@@ -1,3 +1,6 @@
 [submodule "src/vendor/websocket-server"]
 	path = src/vendor/websocket-server
 	url = git://github.com/miksago/node-websocket-server.git
+[submodule "src/vendor/goog"]
+	path = src/vendor/goog
+	url = https://github.com/blixt/node-goog.git

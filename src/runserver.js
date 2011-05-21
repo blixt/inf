@@ -4,8 +4,11 @@
 var fs = require('fs'),
     ws = require('./vendor/websocket-server');
 
-require('goog').init('closure-library/closure/goog/');
+// Load the Google Closure Library.
+require('./vendor/goog').init('closure-library/closure/goog/');
 eval(fs.readFileSync('deps.js', 'utf-8'));
+
+goog.require('inf.logic');
 
 var server = ws.createServer();
 server.addListener('connection', function (conn) {
