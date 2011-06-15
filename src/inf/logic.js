@@ -23,7 +23,7 @@ goog.require('inf');
  * An object in the world that can move around.
  * @constructor
  * @extends goog.events.EventTarget
- * @param {number} id The id of the entity.
+ * @param {string} id The id of the entity.
  * @param {number} width The width of the entity, in blocks.
  * @param {number} height The height of the entity, in blocks.
  * @param {!inf.logic.Region} region The region that the entity should be
@@ -38,7 +38,7 @@ inf.logic.Entity = function(id, width, height, region, x, y) {
 
     /**
      * The id of this entity.
-     * @type {number}
+     * @type {string}
      */
     this.id = id;
 
@@ -65,7 +65,7 @@ inf.logic.Entity = function(id, width, height, region, x, y) {
     }
 
     if (inf.DEBUG) {
-        console.log('Loaded entity #' + id + '.');
+        console.log('Loaded entity "' + id + '".');
     }
 };
 goog.inherits(inf.logic.Entity, goog.events.EventTarget);
@@ -155,7 +155,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
             for (var x = minX; x <= endX; x++) {
                 if (x >= inf.logic.Region.BLOCKS_X) {
                     // Tile to check is in next region.
-                    r = r.getNext();
+                    r = r.getRight();
                     // Not much we can do about region not being loaded yet.
                     if (!r) { break; }
                     // Reassign X coordinate to wrap around.
@@ -237,7 +237,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                 for (var x = mx; x < endX; x++) {
                     if (x >= inf.logic.Region.BLOCKS_X) {
                         // Tile to check is in next region.
-                        r = r.getNext();
+                        r = r.getRight();
                         // Not much we can do about region not being loaded yet.
                         if (!r) { break; }
                         // Reassign X coordinate to wrap around.
@@ -262,7 +262,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                 for (var x = mx; x > endX; x--) {
                     if (x < 0) {
                         // Tile to check is in previous region.
-                        r = r.getPrev();
+                        r = r.getLeft();
                         // Not much we can do about region not being loaded yet.
                         if (!r) { break; }
                         // Reassign X coordinate to wrap around.
@@ -292,7 +292,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
         }
 
         if (nx + dx < 0) {
-            r = this.region.getPrev();
+            r = this.region.getLeft();
             if (r) {
                 this.x = inf.logic.Region.BLOCKS_X + nx + dx;
                 this.changeRegion(r);
@@ -301,7 +301,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
                 leftCollision = true;
             }
         } else if (nx + dx >= inf.logic.Region.BLOCKS_X) {
-            r = this.region.getNext();
+            r = this.region.getRight();
             if (r) {
                 this.x = nx + dx - inf.logic.Region.BLOCKS_X;
                 this.changeRegion(r);
@@ -322,7 +322,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
  * A player entity.
  * @constructor
  * @extends inf.logic.Entity
- * @param {number} id The id of the entity.
+ * @param {string} id The id of the entity.
  * @param {!inf.logic.Region} region The region that the entity should be
  *     placed in.
  * @param {number} x The X coordinate in the region that the entity should be
@@ -338,12 +338,13 @@ goog.inherits(inf.logic.Player, inf.logic.Entity);
 /**
  * A region that represents a chunk of blocks in the world.
  * @constructor
- * @param {number} id The id of the region.
+ * @param {string} id The id of the region.
  * @param {Array.<number>} data The data to initialize the region with.
- * @param {?number} prevId The id of the region before this one.
- * @param {?number} nextId The id of the region after this one.
+ * @param {Array.<?string>} neighborIds A list of the ids of the neighbors of
+ *                                      this region, in the order above, right,
+ *                                      below, left.
  */
-inf.logic.Region = function(id, data, prevId, nextId) {
+inf.logic.Region = function(id, data, neighborIds) {
     // Assert that the data has the correct length.
     if (data.length != inf.logic.Region.NUM_BLOCKS) {
         throw Error('Invalid data length.');
@@ -360,32 +361,34 @@ inf.logic.Region = function(id, data, prevId, nextId) {
      * An object with all loaded entities in this region. The key of every item
      * is the id of the entity.
      * @protected
-     * @type {Object.<number, !inf.logic.Entity>}
+     * @type {Object.<string, !inf.logic.Entity>}
      */
     this.entities = {};
 
     /**
-     * The id of the previous region.
+     * A list of neighbors of this region, in the order above, right, below,
+     * left.
      * @protected
-     * @type {?number}
+     * @type {Array.<inf.logic.Region>}
      */
-    this.prevId = prevId;
+    this.neighbors = [null, null, null, null];
 
     /**
-     * The id of the next region.
+     * A list of the ids of the neighbors of this region, in the order above,
+     * right, below, left.
      * @protected
-     * @type {?number}
+     * @type {Array.<?string>}
      */
-    this.nextId = nextId;
+    this.neighborIds = neighborIds;
 
     /**
      * The id of this region.
-     * @type {number}
+     * @type {string}
      */
     this.id = id;
 
     if (inf.DEBUG) {
-        console.log('Loaded region #' + id + '.');
+        console.log('Loaded region "' + id + '".');
     }
 };
 
@@ -452,20 +455,6 @@ inf.logic.Region.generate = function() {
 };
 
 /**
- * A reference to the next region.
- * @protected
- * @type {inf.logic.Region}
- */
-inf.logic.Region.prototype.nextRegion = null;
-
-/**
- * A reference to the previous region.
- * @protected
- * @type {inf.logic.Region}
- */
-inf.logic.Region.prototype.prevRegion = null;
-
-/**
  * A reference to the world that the region belongs in.
  * @type {inf.logic.World}
  */
@@ -479,18 +468,18 @@ inf.logic.Region.prototype.addEntity = function(entity) {
     if (inf.DEBUG) {
         if (entity.region) {
             throw Error(
-                'Entity #' + entity.id + ' is already in another region (#' +
-                entity.region.id + ').');
+                'Entity "' + entity.id + '" is already in another region ("' +
+                entity.region.id + '").');
         }
 
         if (entity.id in this.entities) {
             throw Error(
-                'Entity #' + entity.id + ' is already in region #' + this.id +
-                '.');
+                'Entity "' + entity.id + '" is already in region "' + this.id +
+                '".');
         }
 
         console.log(
-            'Added entity #' + entity.id + ' to region #' + this.id + '.');
+            'Added entity "' + entity.id + '" to region "' + this.id + '".');
     }
 
     this.entities[entity.id] = entity;
@@ -508,25 +497,50 @@ inf.logic.Region.prototype.getBlock = function(x, y) {
 };
 
 /**
- * Tries to get the next region in relation to this one.
- * @return {inf.logic.Region} The next region, if any.
+ * Tries to get the specified neighbor. If it hasn't been loaded, but its id is
+ * known, request it to be loaded.
+ * @protected
+ * @param {number} which Which neighbor to get.
+ * @return {inf.logic.Region} The region, or null if it could not be gotten.
  */
-inf.logic.Region.prototype.getNext = function() {
-    if (!this.nextRegion && this.nextId) {
-        this.world.requestRegion(this.nextId);
+inf.logic.Region.prototype.getNeighbor = function(which) {
+    var neighborId = this.neighborIds[which];
+    if (!this.neighbors[which] && neighborId) {
+        this.world.requestRegion(neighborId);
     }
-    return this.nextRegion;
+    return this.neighbors[which];
 };
 
 /**
- * Tries to get the previous region in relation to this one.
+ * Tries to get the previous region along the Y axis, in relation to this one.
+ * @return {inf.logic.Region} The above region, if any.
+ */
+inf.logic.Region.prototype.getAbove = function() {
+    return this.getNeighbor(0);
+};
+
+/**
+ * Tries to get the next region along the Y axis, in relation to this one.
+ * @return {inf.logic.Region} The below region, if any.
+ */
+inf.logic.Region.prototype.getBelow = function() {
+    return this.getNeighbor(2);
+};
+
+/**
+ * Tries to get the previous region along the X axis, in relation to this one.
  * @return {inf.logic.Region} The previous region, if any.
  */
-inf.logic.Region.prototype.getPrev = function() {
-    if (!this.prevRegion && this.prevId) {
-        this.world.requestRegion(this.prevId);
-    }
-    return this.prevRegion;
+inf.logic.Region.prototype.getLeft = function() {
+    return this.getNeighbor(3);
+};
+
+/**
+ * Tries to get the next region along the X axis, in relation to this one.
+ * @return {inf.logic.Region} The next region, if any.
+ */
+inf.logic.Region.prototype.getRight = function() {
+    return this.getNeighbor(1);
 };
 
 /**
@@ -537,8 +551,8 @@ inf.logic.Region.prototype.removeEntity = function(entity) {
     if (inf.DEBUG) {
         if (!(entity.id in this.entities)) {
             throw Error(
-                'Entity #' + entity.id + ' is not in this region (#' +
-                this.id + ').');
+                'Entity "' + entity.id + '" is not in this region ("' +
+                this.id + '").');
         }
     }
 
@@ -547,7 +561,7 @@ inf.logic.Region.prototype.removeEntity = function(entity) {
 
     if (inf.DEBUG) {
         console.log(
-            'Removed entity #' + entity.id + ' from region #' + this.id + '.');
+            'Removed entity "' + entity.id + '" from region "' + this.id + '".');
     }
 };
 
@@ -563,14 +577,14 @@ inf.logic.World = function() {
      * An object with all loaded entities in this world. The key of every item
      * is the id of the entity.
      * @protected
-     * @type {Object.<number, !inf.logic.Entity>}
+     * @type {Object.<string, !inf.logic.Entity>}
      */
     this.entities = {};
 
     /**
      * A lookup of regions that are referenced but not loaded.
      * @private
-     * @type {Object.<number, {next: inf.logic.Region, prev: inf.logic.Region}>}
+     * @type {Object.<string, Array.<inf.logic.Region>>}
      */
     this.pending_ = {};
 
@@ -578,14 +592,14 @@ inf.logic.World = function() {
      * An object with all loaded regions in this world. The key of every
      * item is the id of the region.
      * @protected
-     * @type {Object.<number, !inf.logic.Region>}
+     * @type {Object.<string, !inf.logic.Region>}
      */
     this.regions = {};
 
     /**
      * A lookup table for what regions have been requested.
      * @private
-     * @type {Object.<number, boolean>}
+     * @type {Object.<string, boolean>}
      */
     this.requested_ = {};
 };
@@ -599,11 +613,11 @@ inf.logic.World.prototype.addEntity = function(entity) {
     if (inf.DEBUG) {
         if (entity.id in this.entities) {
             throw Error(
-                'Entity #' + entity.id + ' is already in this world.');
+                'Entity "' + entity.id + '" is already in this world.');
         }
 
         console.log(
-            'Added entity #' + entity.id + ' to world.');
+            'Added entity "' + entity.id + '" to world.');
     }
 
     this.entities[entity.id] = entity;
@@ -616,7 +630,7 @@ inf.logic.World.prototype.addEntity = function(entity) {
 inf.logic.World.prototype.addRegion = function(region) {
     if (inf.DEBUG) {
         if (region.world || region.id in this.regions) {
-            throw Error('Region #' + region.id + ' has already been loaded.');
+            throw Error('Region "' + region.id + '" has already been loaded.');
         }
     }
 
@@ -624,14 +638,20 @@ inf.logic.World.prototype.addRegion = function(region) {
     if (region.id in this.pending_) {
         var r = this.pending_[region.id];
 
-        if (r.next) {
-            region.nextRegion = r.next;
-            r.next.prevRegion = region;
-        }
+        // Go through the directions (0=up, 1=right, 2=down, 3=left).
+        for (var dir = 0; dir < 4; dir++) {
+            if (r[dir]) {
+                // A region in the current direction was loaded, so link it to
+                // this region.
+                region.neighbors[dir] = r[dir];
+                // Do the reverse connection as well.
+                r[dir].neighbors[(dir + 2) % 4] = region;
 
-        if (r.prev) {
-            region.prevRegion = r.prev;
-            r.prev.nextRegion = region;
+                if (inf.DEBUG) {
+                    console.log('Connected regions "' + r[dir].id +
+                                '" and "' + region.id + '" (was pending).');
+                }
+            }
         }
 
         delete this.pending_[region.id];
@@ -643,27 +663,34 @@ inf.logic.World.prototype.addRegion = function(region) {
     }
 
     // Add references to neighboring regions to the region being added.
-    // Basically, this is a doubly linked list. If the next/previous region has
+    // Basically, this is a doubly linked list. If the neighboring region has
     // not been loaded yet, the link will be added to a pending queue and
     // completed once the neighboring region has been loaded.
-    var nextId = region.nextId, prevId = region.prevId;
-
-    if (nextId in this.regions) {
-        region.nextRegion = this.regions[nextId];
-    } else if (nextId) {
-        if (!(nextId in this.pending_)) {
-            this.pending_[nextId] = {next: null, prev: null};
+    // Go through the directions (0=up, 1=right, 2=down, 3=left).
+    for (var dir = 0; dir < 4; dir++) {
+        if (region.neighbors[dir]) {
+            continue;
         }
-        this.pending_[nextId].prev = region;
-    }
 
-    if (prevId in this.regions) {
-        region.prevRegion = this.regions[prevId];
-    } else if (prevId) {
-        if (!(prevId in this.pending_)) {
-            this.pending_[prevId] = {next: null, prev: null};
+        var neighborId = region.neighborIds[dir];
+        if (neighborId in this.regions) {
+            region.neighbors[dir] = this.regions[neighborId];
+
+            if (inf.DEBUG) {
+                console.log('Connected region "' + region.id + '" to "' +
+                            neighborId + '".');
+            }
+        } else if (neighborId) {
+            if (!(neighborId in this.pending_)) {
+                this.pending_[neighborId] = [null, null, null, null];
+
+                if (inf.DEBUG) {
+                    console.log('Added region "' + neighborId + '" to ' +
+                                'pending list.');
+                }
+            }
+            this.pending_[neighborId][(dir + 2) % 4] = region;
         }
-        this.pending_[prevId].next = region;
     }
 
     region.world = this;
@@ -680,7 +707,7 @@ inf.logic.World.prototype.removeEntity = function(entity) {
     if (inf.DEBUG) {
         if (!(entity.id in this.entities)) {
             throw Error(
-                'Entity #' + entity.id + ' is not in this world.');
+                'Entity "' + entity.id + '" is not in this world.');
         }
     }
 
@@ -688,7 +715,7 @@ inf.logic.World.prototype.removeEntity = function(entity) {
 
     if (inf.DEBUG) {
         console.log(
-            'Removed entity #' + entity.id + '.');
+            'Removed entity "' + entity.id + '".');
     }
 };
 
@@ -697,7 +724,7 @@ inf.logic.World.prototype.removeEntity = function(entity) {
  * calling this method depends on the implementation. A server implementation
  * would load/generate the region, while a client implementation would request
  * it from the server.
- * @param {number} id The id of the region that is required.
+ * @param {string} id The id of the region that is required.
  */
 inf.logic.World.prototype.requestRegion = function(id) {
     if (id in this.regions || id in this.requested_) {

@@ -17,12 +17,18 @@ goog.require('inf.ui');
 
 function main() {
     // Create a looping world for infinity goodness!
-    var r1 = new inf.logic.Region(1, inf.logic.Region.generate(), 8, 2),
-        r2 = new inf.logic.Region(2, inf.logic.Region.generate(), 1, 3),
-        r3 = new inf.logic.Region(3, inf.logic.Region.generate(), 2, 4),
-        r4 = new inf.logic.Region(4, inf.logic.Region.generate(), 3, 5),
-        r5 = new inf.logic.Region(5, inf.logic.Region.generate(), 4, 6),
-        r6 = new inf.logic.Region(6, inf.logic.Region.generate(), 5, 7);
+    var r1 = new inf.logic.Region('a', inf.logic.Region.generate(),
+                                  [null, 'b', null, 'z']),
+        r2 = new inf.logic.Region('b', inf.logic.Region.generate(),
+                                  [null, 'c', null, 'a']),
+        r3 = new inf.logic.Region('c', inf.logic.Region.generate(),
+                                  [null, 'd', null, 'b']),
+        r4 = new inf.logic.Region('d', inf.logic.Region.generate(),
+                                  [null, 'e', null, 'c']),
+        r5 = new inf.logic.Region('e', inf.logic.Region.generate(),
+                                  [null, 'f', null, 'd']),
+        r6 = new inf.logic.Region('f', inf.logic.Region.generate(),
+                                  [null, 'g', null, 'e']);
 
     var world = new inf.logic.World();
 
@@ -37,7 +43,7 @@ function main() {
     world.addRegion(r5);
     world.addRegion(r6);
 
-    var player = new inf.logic.Player(1, r3, 12, 118);
+    var player = new inf.logic.Player('a', r3, 12, 118);
     world.addEntity(player);
     var viewport = new inf.gfx.Viewport(480, 480, 'viewport');
     var ui = new inf.ui.KeyboardMouseInterface();

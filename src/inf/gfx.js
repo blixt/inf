@@ -141,9 +141,9 @@ inf.gfx.View.prototype.start_ = -1;
 
 /**
  * The id of the region that the view is rendering.
- * @type {number}
+ * @type {string?}
  */
-inf.gfx.View.prototype.regionId = -1;
+inf.gfx.View.prototype.regionId = null;
 
 /**
  * Which section along the X axis that the view is rendering.
@@ -297,7 +297,7 @@ inf.gfx.View.prototype.render = function(opt_numBlocks) {
         this.done = true;
         if (inf.DEBUG) {
             console.log(
-                'Rendered section #' + this.region_.id + ':' + this.sectionX +
+                'Rendered section "' + this.region_.id + '":' + this.sectionX +
                 ':' + this.sectionY + '.');
         }
         return true;
@@ -535,7 +535,7 @@ inf.gfx.Viewport.prototype.center = function(region, x, y) {
     var curX = px, curY, curSx = sx, curSy, r = region;
     while (curX > -inf.gfx.View.SIZE) {
         if (curSx < 0) {
-            r = r.getPrev();
+            r = r.getLeft();
             if (!r) { break; }
             curSx = inf.gfx.View.SECTIONS_X - 1;
         }
@@ -555,7 +555,7 @@ inf.gfx.Viewport.prototype.center = function(region, x, y) {
     r = region;
     while (curX < this.width) {
         if (curSx >= inf.gfx.View.SECTIONS_X) {
-            r = r.getNext();
+            r = r.getRight();
             if (!r) { break; }
             curSx = 0;
         }
