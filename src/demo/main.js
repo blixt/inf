@@ -45,22 +45,36 @@ function main() {
 
     var player = new inf.logic.Player('a', r3, 12, 118);
     world.addEntity(player);
+
     var viewport = new inf.gfx.Viewport(480, 480, 'viewport');
     var ui = new inf.ui.KeyboardMouseInterface();
 
-    var vy = 0.2;
+    var vx = 0, vy = 0.2;
 
     ui.listen('jump', function() {
         if (!player.colliding.down) { return; }
-        vy = -0.5;
+        vy = -0.8;
     });
 
     setInterval(function() {
-        var vx = 0;
-        if (ui.state.left) vx -= 0.1;
-        if (ui.state.right) vx += 0.1;
+        if (player.colliding.down && !(ui.state.left || ui.state.right)) {
+            vx *= 0.8;
+            if (Math.abs(vx) < 0.01) {
+                vx = 0;
+            }
+        }
+
+        if (ui.state.left && !player.colliding.left && vx > -0.15) {
+            vx -= (player.colliding.down ? 0.05 : 0.01);
+        }
+        if (ui.state.right && !player.colliding.right && vx < 0.15) {
+            vx += (player.colliding.down ? 0.05 : 0.01);
+        }
+
         if (vy < 0.4) { vy += 0.05; } else { vy = 0.4; }
+
         player.move(vx, vy);
+
         viewport.center(player.region, player.x, player.y);
     }, 20);
 }

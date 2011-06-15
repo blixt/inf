@@ -59,7 +59,7 @@ inf.gfx.View.BACKGROUND_COLOR = 'rgb(200,220,255)';
  * @const
  * @type {number}
  */
-inf.gfx.View.BLOCKS = 16;
+inf.gfx.View.BLOCKS = 32;
 
 /**
  * The total number of blocks in a view.
@@ -74,7 +74,7 @@ inf.gfx.View.NUM_BLOCKS = inf.gfx.View.BLOCKS * inf.gfx.View.BLOCKS;
  * @const
  * @type {number}
  */
-inf.gfx.View.BLOCK_SIZE = 32;
+inf.gfx.View.BLOCK_SIZE = 16;
 
 /**
  * The size of a view (for both dimensions).

@@ -331,7 +331,7 @@ inf.logic.Entity.prototype.move = function(dx, dy) {
  *     placed at.
  */
 inf.logic.Player = function(id, region, x, y) {
-    inf.logic.Entity.call(this, id, .7, 1.8, region, x, y);
+    inf.logic.Entity.call(this, id, 1.2, 2.9, region, x, y);
 };
 goog.inherits(inf.logic.Player, inf.logic.Entity);
 
