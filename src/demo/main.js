@@ -10,70 +10,71 @@
 
 goog.provide('demo.main');
 
+goog.require('goog.events');
 goog.require('inf.gfx');
 goog.require('inf.logic');
 goog.require('inf.ui');
 
-function genRegionData() {
-    var data = [];
-
-    var i = 0;
-    for (var x = 0; x < inf.logic.Region.BLOCKS_X; x++) {
-        var treshold = 118 + Math.random() * 3;
-        for (var y = 0; y < inf.logic.Region.BLOCKS_Y; y++, i++) {
-            if (y >= treshold) {
-                if (y - treshold < 3 + Math.random() * 3) {
-                    data[i] = inf.logic.Region.BlockType.DIRT;
-                } else {
-                    if (Math.random() > 0.9) {
-                        data[i] = 3;
-                    } else {
-                        data[i] = inf.logic.Region.BlockType.STONE;
-                    }
-                }
-            } else {
-                data[i] = 0;
-            }
-        }
-    }
-
-    return data;
-}
-
 function main() {
-    var r1 = new inf.logic.Region(1, genRegionData()),
-        r2 = new inf.logic.Region(2, genRegionData()),
-        r3 = new inf.logic.Region(3, genRegionData()),
-        r4 = new inf.logic.Region(4, genRegionData()),
-        r5 = new inf.logic.Region(5, genRegionData()),
-        r6 = new inf.logic.Region(6, genRegionData());
-
     // Create a looping world for infinity goodness!
-    var world = new inf.logic.World();
-    world.addRegion(r1, 6, 2);
-    world.addRegion(r2, 1, 3);
-    world.addRegion(r3, 2, 4);
-    world.addRegion(r4, 3, 5);
-    world.addRegion(r5, 4, 6);
-    world.addRegion(r6, 5, 1);
+    var r1 = new inf.logic.Region('a', inf.logic.Region.generate(),
+                                  [null, 'b', null, 'z']),
+        r2 = new inf.logic.Region('b', inf.logic.Region.generate(),
+                                  [null, 'c', null, 'a']),
+        r3 = new inf.logic.Region('c', inf.logic.Region.generate(),
+                                  [null, 'd', null, 'b']),
+        r4 = new inf.logic.Region('d', inf.logic.Region.generate(),
+                                  [null, 'e', null, 'c']),
+        r5 = new inf.logic.Region('e', inf.logic.Region.generate(),
+                                  [null, 'f', null, 'd']),
+        r6 = new inf.logic.Region('f', inf.logic.Region.generate(),
+                                  [null, 'g', null, 'e']);
 
-    var player = new inf.logic.Entity(1, r3, 12, 118, 0.9, 1.9);
+    var world = new inf.logic.World();
+
+    goog.events.listen(world, ['regionavailable', 'regionrequired'], function (e) {
+        console.log(e.type);
+    });
+
+    world.addRegion(r1);
+    world.addRegion(r2);
+    world.addRegion(r3);
+    world.addRegion(r4);
+    world.addRegion(r5);
+    world.addRegion(r6);
+
+    var player = new inf.logic.Player('a', r3, 12, 118);
+    world.addEntity(player);
+
     var viewport = new inf.gfx.Viewport(480, 480, 'viewport');
     var ui = new inf.ui.KeyboardMouseInterface();
 
-    var vy = 0.2;
+    var vx = 0, vy = 0.2;
 
     ui.listen('jump', function() {
         if (!player.colliding.down) { return; }
-        vy = -0.5;
+        vy = -0.8;
     });
 
     setInterval(function() {
-        var vx = 0;
-        if (ui.state.left) vx -= 0.1;
-        if (ui.state.right) vx += 0.1;
+        if (player.colliding.down && !(ui.state.left || ui.state.right)) {
+            vx *= 0.8;
+            if (Math.abs(vx) < 0.01) {
+                vx = 0;
+            }
+        }
+
+        if (ui.state.left && !player.colliding.left && vx > -0.15) {
+            vx -= (player.colliding.down ? 0.05 : 0.01);
+        }
+        if (ui.state.right && !player.colliding.right && vx < 0.15) {
+            vx += (player.colliding.down ? 0.05 : 0.01);
+        }
+
         if (vy < 0.4) { vy += 0.05; } else { vy = 0.4; }
+
         player.move(vx, vy);
+
         viewport.center(player.region, player.x, player.y);
     }, 20);
 }
